@@ -21,7 +21,7 @@ function [CroppedImage,CutPoints] = FindBottle(OriginalImage)
         leftPoint=leftPoint-1;
     end
     %% CHECK IF THE DISTANCE BELONGS TO A BOTTLE OR A GAP
-    bottleSize=120;
+    bottleSize=118;
     if((rightPoint-leftPoint)> bottleSize*.70 && CheckTOP(midPoint(1),midPoint(2) ) == 0)
         CroppedImage= nan;
         CutPoints = nan;
