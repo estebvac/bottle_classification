@@ -1,4 +1,4 @@
-function Result = processBottleImage(inputImage)
+function [Result, bottleImage, locations] = processBottleImage(inputImage)
 %Function to process an image and say if it has cap or not, if label is there, etc
 %Inputs:
 %       inputImage: jpg image of three bottles
@@ -9,11 +9,19 @@ function Result = processBottleImage(inputImage)
 Result.bottlePresent = true;
 Result.underfilled = false;
 Result.overfilled = false;
-Result.labelMissing = false; %Done
-Result.whiteLabel = false; %Done
+Result.labelMissing = false;
+Result.whiteLabel = false;
 Result.labelNotStraight = false;
-Result.missingCap = false;   %Done
+Result.missingCap = false;
 Result.deformed = false;
+
+locations.underfilled = [];
+locations.overfilled = [];
+locations.labelMissing = [];
+locations.whiteLabel = [];
+locations.labelNotStraight = [];
+locations.missingCap = [];
+locations.deformed = [];
 
 %% Extract bottle in the middle and extract channels
 [bottleImage, ~] = FindBottle(inputImage);
@@ -29,20 +37,19 @@ blue = bottleImage(:,:,3);
 
 bottleBW = rgb2gray(bottleImage);
 
-
-
 %% Now process every feature
 
 %% Under-filled: 
 [~, remainingBottle] = getTopAndRemaining(bottleBW);
 liquidArea = remainingBottle(1:95,30:80);
-length(liquidArea(liquidArea < 100))
 if (length(liquidArea(liquidArea < 100)) < 800)
     Result.underfilled = true;
+    locations.underfilled = locate(liquidArea, bottleBW, 'locateunderfill');
 end
 %% Over-filled:
 if (length(liquidArea(liquidArea < 100)) > 1600) %1500
     Result.overfilled = true;
+    locations.overfilled = locate(liquidArea, bottleBW, 'locateoverfill');
 end
 
 %% White label
@@ -50,6 +57,7 @@ end
 lowPart = remBW(floor(size(remBW,1)/2):end ,:);
 if(length(lowPart(lowPart>200)) > 100*65)
     Result.whiteLabel = true;
+    locations.whitelabel = locate(remBW, bottleBW, 'whitelabel');
 end
 
 %% Label Missing:
@@ -58,10 +66,10 @@ newImage = red - green - blue;
 if(Result.whiteLabel == false) %If label is not white, check if it is red
     if(length(remaining(remaining>100)) < 50)
         Result.labelMissing = true;
+        locations.labelMissing = locate(remBW, bottleBW, 'labelnotlocated');
     end
 end
 
-figure(2); imshow(newImage);
 %% Label not straight
 if (Result.labelMissing == false && Result.whiteLabel == false)
     [Label,~] = redThreshhold(bottleImage);
@@ -88,16 +96,18 @@ if (Result.labelMissing == false && Result.whiteLabel == false)
 %     plot(x1,y1, 'LineWidth',2)
     atan(abs(p(1)))*180/pi
     if (atan(abs(p(1)))*180/pi > 5 )
-         Result.labelNotStraight = true;
+        Result.labelNotStraight = true;
+        locations.labelNotStraight = locate(BW, bottleBW, 'notstraight');
     end
 end
 
 %% Missing cap
 if(length(top(top>100)) < 50)
     Result.missingCap = true;
+    locations.missingCap = locate(top, bottleBW, 'missingCap');
 end
 
-%Deformed bottle
+%% Deformed bottle
 
 
 
