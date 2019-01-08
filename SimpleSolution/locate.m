@@ -15,6 +15,8 @@ function [location] = locate(image,orig, characteristic)
             location = locateFill(image, remaining, orig);
         case 'missingCap'
             location = missingCap(image, orig);
+        case 'deformed'
+            location = locateDeformed(image);
     end
 end
 
@@ -62,7 +64,7 @@ end
 
 function square = labelNotLocated(orig)
     colsOrig = size(orig, 2);
-    square = [2 round(colsOrig/2.0)+100 colsOrig-3 100]
+    square = [2 round(colsOrig/2.0)+100 colsOrig-3 100];
 end
 
 function square = locateFill(image, rest ,orig)
@@ -85,4 +87,27 @@ end
 
 function square = missingCap(image, orig)
     square = [12 2 size(orig, 2)-24 size(image,1)];
+end
+
+function square = locateDeformed(rayas)
+    %Analyze every line
+    for i= 1:10:size(rayas, 2)
+        currLine = rayas(97:214,i);
+        if(length(currLine(currLine>100))<2)
+            if(i-10 >= 1)
+                square = [i-10, 150, 9, 64];
+                return;
+                
+            else
+                square = [i, 150, 9, 64];
+                return;
+            end
+        end
+    end
+    %Analyze last line
+    lastLine = rayas(97:214, size(rayas,2));
+    if(length(lastLine(lastLine>100))<2)
+        square = [size(rayas,2)-10, 150, 9, 64];
+        return;
+    end
 end

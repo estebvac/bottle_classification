@@ -184,6 +184,9 @@ end
 if (faults.deformed)
    handles.deformed.BackgroundColor = red;
    handles.normal.BackgroundColor = red;
+   axes(handles.segmentedImg),
+   hold on,
+   rectangle('Position', locations.deformed,'EdgeColor','r','LineWidth',2);
 end
 
 
