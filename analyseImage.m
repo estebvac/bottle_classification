@@ -13,6 +13,7 @@ if (faults.bottlePresent)
     
 else
     mostlikely = '';
+    hogvisualization = [];
 end
 
 end
