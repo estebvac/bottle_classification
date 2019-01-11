@@ -71,7 +71,7 @@ if(Result.whiteLabel == false) %If label is not white, check if it is red
 end
 
 %% Label not straight
-if (Result.labelMissing == false && Result.whiteLabel == false)
+if (Result.labelMissing == false && Result.whiteLabel == false && Result.deformed == false)
     [Label,~] = redThreshhold(bottleImage);
     Label(230:end,:) = 1; 
     stats = regionprops(Label, 'Area');
@@ -108,6 +108,44 @@ if(length(top(top>100)) < 50)
 end
 
 %% Deformed bottle
+if(~Result.whiteLabel && ~Result.labelMissing) %If label is not white (only deformed bottles with red label are recognized)
+    %Create mask of the size of the bottle image
+    mask = zeros(size(bottleBW));
+    %Create some lines in the mask
+    for i = 1:10:size(mask,2)
+       mask(97:214,i) = ones(118,1); 
+    end
+    %ensure that there is a line at the end
+    mask(97:214, size(mask,2)) =ones(118,1); 
+
+    %Apply mask to red channel based image
+    linesResult = mask.*double(newImage);
+
+    %Analyze every line
+    for i= 1:10:size(mask, 2)
+        currLine = linesResult(97:214,i);
+        currLineGray = bottleBW(97:214, i);
+        if(length(currLine(currLine>100))<2 && length(currLineGray(currLineGray<80))<5)
+            Result.deformed = true;
+        end
+    end
+    %Analyze last line
+    lastLine = linesResult(97:214, size(mask,2));
+    lastLineGray = bottleBW(97:214, size(mask,2));
+    if(length(lastLine(lastLine>100))<2 && length(lastLineGray(lastLineGray<80))<5)
+        Result.deformed = true;
+    end
+    
+    if(Result.deformed)
+       locations.deformed = locate(linesResult, newImage, 'deformed');
+    end
+    
+end
+
+if(Result.deformed && Result.labelNotStraight)
+    Result.labelNotStraight = false;
+end
+
 
 
 
