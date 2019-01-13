@@ -95,7 +95,7 @@ if (Result.labelMissing == false && Result.whiteLabel == false && Result.deforme
 %     figure(2);    imshow(BW); hold on;
 %     plot(x1,y1, 'LineWidth',2)
     atan(abs(p(1)))*180/pi
-    if (atan(abs(p(1)))*180/pi > 5 )
+    if (atan(abs(p(1)))*180/pi > 8 )
         Result.labelNotStraight = true;
         locations.labelNotStraight = locate(BW, bottleBW, 'notstraight');
     end
