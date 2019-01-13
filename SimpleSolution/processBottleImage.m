@@ -184,10 +184,6 @@ if(~Result.whiteLabel && ~Result.labelMissing) %If label is not white (only defo
     
 end
 
-if(Result.deformed && Result.labelNotStraight)
-    Result.labelNotStraight = false;
-end
-
 
 
 
