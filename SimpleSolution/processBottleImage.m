@@ -1,4 +1,4 @@
-function [Result, bottleImage, locations] = processBottleImage(inputImage)
+function [Result, bottleImage, locations, measures] = processBottleImage(inputImage)
 %Function to process an image and say if it has cap or not, if label is there, etc
 %Inputs:
 %       inputImage: jpg image of three bottles
@@ -23,6 +23,14 @@ locations.labelNotStraight = [];
 locations.missingCap = [];
 locations.deformed = [];
 
+measures.liquidArea = 0;
+measures.brightAreaLabel = 0;
+measures.darkAreaLabel = 0;
+measures.labelStraightness  = 0;
+measures.capArea = 0;
+measures.deformedMaskRed = 0;
+measures.deformedMaskGray = 0;
+
 %% Extract bottle in the middle and extract channels
 [bottleImage, ~] = FindBottle(inputImage);
 if(isnan(bottleImage))
@@ -42,12 +50,15 @@ bottleBW = rgb2gray(bottleImage);
 %% Under-filled: 
 [~, remainingBottle] = getTopAndRemaining(bottleBW);
 liquidArea = remainingBottle(1:95,30:80);
-if (length(liquidArea(liquidArea < 100)) < 800)
+sizeLiquidArea = length(liquidArea(liquidArea < 100));
+measures.liquidArea = sizeLiquidArea;
+
+if (sizeLiquidArea < 800)
     Result.underfilled = true;
     locations.underfilled = locate(liquidArea, bottleBW, 'locateunderfill');
 end
 %% Over-filled:
-if (length(liquidArea(liquidArea < 100)) > 1600) %1500
+if (sizeLiquidArea > 1600)
     Result.overfilled = true;
     locations.overfilled = locate(liquidArea, bottleBW, 'locateoverfill');
 end
@@ -55,7 +66,9 @@ end
 %% White label
 [~, remBW] = getTopAndRemaining(bottleBW);
 lowPart = remBW(floor(size(remBW,1)/2):end ,:);
-if(length(lowPart(lowPart>200)) > 100*65)
+sizeOfBrightArea = length(lowPart(lowPart>200));
+measures.brightAreaLabel = sizeOfBrightArea;
+if(sizeOfBrightArea > 100*65)
     Result.whiteLabel = true;
     locations.whitelabel = locate(remBW, bottleBW, 'whitelabel');
 end
@@ -63,8 +76,12 @@ end
 %% Label Missing:
 newImage = red - green - blue;
     [top, remaining] = getTopAndRemaining(newImage); %Divide bottle into two parts: top is 33.33% of the image and remaining is the remaining part
+
+darkAreaLevel = length(remaining(remaining>100));
+measures.darkAreaLabel = darkAreaLevel;
+
 if(Result.whiteLabel == false) %If label is not white, check if it is red
-    if(length(remaining(remaining>100)) < 50)
+    if(darkAreaLevel < 50)
         Result.labelMissing = true;
         locations.labelMissing = locate(remBW, bottleBW, 'labelnotlocated');
     end
@@ -94,15 +111,19 @@ if (Result.labelMissing == false && Result.whiteLabel == false && Result.deforme
     y1 = polyval(p,x1);
 %     figure(2);    imshow(BW); hold on;
 %     plot(x1,y1, 'LineWidth',2)
-    atan(abs(p(1)))*180/pi
-    if (atan(abs(p(1)))*180/pi > 5 )
+    alpha = atan(abs(p(1)))*180/pi;
+    
+    measures.labelStraightness  = alpha;
+    if (alpha > 5)
         Result.labelNotStraight = true;
         locations.labelNotStraight = locate(BW, bottleBW, 'notstraight');
     end
 end
 
 %% Missing cap
-if(length(top(top>100)) < 50)
+capArea = length(top(top>100));
+measures.capArea = capArea;
+if(capArea < 50)
     Result.missingCap = true;
     locations.missingCap = locate(top, bottleBW, 'missingCap');
 end
@@ -121,24 +142,45 @@ if(~Result.whiteLabel && ~Result.labelMissing) %If label is not white (only defo
     %Apply mask to red channel based image
     linesResult = mask.*double(newImage);
 
+    
+    measures.deformedMaskRed = 0;
+    measures.deformedMaskGray = 0;
+    
+    lines = 0;
     %Analyze every line
     for i= 1:10:size(mask, 2)
         currLine = linesResult(97:214,i);
         currLineGray = bottleBW(97:214, i);
-        if(length(currLine(currLine>100))<2 && length(currLineGray(currLineGray<80))<5)
+        lengthCurrLine = length(currLine(currLine>100));
+        lengthGrayLine = length(currLineGray(currLineGray<80));
+        
+        measures.deformedMaskRed = measures.deformedMaskRed + lengthCurrLine;
+        measures.deformedMaskGray = measures.deformedMaskGray + lengthGrayLine;
+        if(lengthCurrLine<2 && lengthGrayLine<5)
             Result.deformed = true;
         end
+        lines = lines + 1;
     end
     %Analyze last line
     lastLine = linesResult(97:214, size(mask,2));
     lastLineGray = bottleBW(97:214, size(mask,2));
-    if(length(lastLine(lastLine>100))<2 && length(lastLineGray(lastLineGray<80))<5)
+
+    lengthCurrLine = length(lastLine(lastLine>100));
+    lengthGrayLine = length(lastLineGray(lastLineGray<80));
+
+    measures.deformedMaskRed = measures.deformedMaskRed + lengthCurrLine;
+    measures.deformedMaskGray = measures.deformedMaskGray + lengthGrayLine;
+
+    if(lengthCurrLine <2 && lengthGrayLine <5)
         Result.deformed = true;
     end
     
     if(Result.deformed)
        locations.deformed = locate(linesResult, newImage, 'deformed');
     end
+    
+    measures.deformedMaskRed = measures.deformedMaskRed / (lines + 1);
+    measures.deformedMaskGray = measures.deformedMaskGray / (lines + 1);
     
 end
 
