@@ -125,6 +125,35 @@ else
     msgbox('The bottle is not present', 'Information', 'help');
 end
 
+% --------------------------------------------------------------------
+function view_all_ClickedCallback(hObject,eventdata,handles)
+   % hObject    handle to identify (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+setpath = uigetdir;
+list = dir(strcat(setpath, '/*.jpg'));
+number_of_files = size(list);
+for i= 1: number_of_files(1,1)    
+    filename = [list(i).folder '\'   list(i).name];
+    OriginalImage = imread(filename);
+    axes(handles.originalImg);
+    imshow(OriginalImage);
+    handles.img = OriginalImage;
+    [faults, mostlikely, bottleImage, locations, hogvisualization] = analyseImage(handles.img, handles.train);
+    axes(handles.segmentedImg);
+    imshow(bottleImage);
+
+    if (faults.bottlePresent)
+        axes(handles.hogImg),
+        imshow(bottleImage),
+        hold on,
+        plot(hogvisualization);
+        markFaults(faults, locations, handles);
+        handles.like.String = mostlikely; 
+    end
+    pause(1);
+end
+
 function markFaults(faults, locations, handles)
     
 green = [0, 1, 0];
@@ -200,5 +229,6 @@ selpath = uigetdir('.', 'Open Training dataset');
 if (selpath ~= 0)
     handles.train = trainSystem(selpath);
     handles.openimg.Enable = 'On';
+    handles.view_all.Enable = 'On';
     guidata(hObject, handles);
 end

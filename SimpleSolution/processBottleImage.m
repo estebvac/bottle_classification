@@ -114,7 +114,7 @@ if (Result.labelMissing == false && Result.whiteLabel == false && Result.deforme
     alpha = atan(abs(p(1)))*180/pi;
     
     measures.labelStraightness  = alpha;
-    if (alpha > 5)
+    if (alpha > 8)
         Result.labelNotStraight = true;
         locations.labelNotStraight = locate(BW, bottleBW, 'notstraight');
     end
