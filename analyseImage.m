@@ -21,7 +21,7 @@ end
 function result = classifyMostLikely(mostLikely)
 
     switch mostLikely{1}
-        case 'uderfilled'
+        case 'underfilled'
             result = 'Under-filled';
         case 'overfilled'
             result = 'Over-filled';
