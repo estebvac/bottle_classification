@@ -131,27 +131,35 @@ function view_all_ClickedCallback(hObject,eventdata,handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 setpath = uigetdir;
-list = dir(strcat(setpath, '/*.jpg'));
-number_of_files = size(list);
-for i= 1: number_of_files(1,1)    
-    filename = [list(i).folder '\'   list(i).name];
-    OriginalImage = imread(filename);
-    axes(handles.originalImg);
-    imshow(OriginalImage);
-    handles.img = OriginalImage;
-    [faults, mostlikely, bottleImage, locations, hogvisualization] = analyseImage(handles.img, handles.train);
-    axes(handles.segmentedImg);
-    imshow(bottleImage);
+if setpath ~= 0 
+    list = dir(strcat(setpath, '/*.jpg'));
+    number_of_files = size(list);
+    mostlikelyLabels = {};
+    for i= 1: number_of_files(1,1)    
+        filename = [list(i).folder '\'   list(i).name];
+        OriginalImage = imread(filename);
+        axes(handles.originalImg);
+        imshow(OriginalImage);
+        handles.img = OriginalImage;
+        [faults, mostlikely, bottleImage, locations, hogvisualization] = analyseImage(handles.img, handles.train);
+        axes(handles.segmentedImg);
+        imshow(bottleImage);
 
-    if (faults.bottlePresent)
-        axes(handles.hogImg),
-        imshow(bottleImage),
-        hold on,
-        plot(hogvisualization);
-        markFaults(faults, locations, handles);
-        handles.like.String = mostlikely; 
+        trlabel = strsplit(list(i).name,'-');
+        trainLabels(i) = trlabel(1);
+        mostlikelyLabels(i) = {mostlikely};
+
+        if (faults.bottlePresent)
+            axes(handles.hogImg),
+            imshow(bottleImage),
+            hold on,
+            plot(hogvisualization);
+            markFaults(faults, locations, handles);
+            handles.like.String = mostlikely; 
+        end
+    %     pause(1);
     end
-    pause(1);
+    save('statistics1.mat', 'trainLabels','mostlikelyLabels');
 end
 
 function markFaults(faults, locations, handles)
