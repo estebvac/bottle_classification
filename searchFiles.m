@@ -12,7 +12,7 @@ clc;
 clear all;
 close all;
 %% READ FULL DIRECTORY
-list = dir('**/*.jpg');
+list = dir('../TrainingData/**/*.jpg');
 number_of_files = size(list);
 labels = zeros(size(list));
 testBottles=zeros(288,119,3,number_of_files(1,1)*2);

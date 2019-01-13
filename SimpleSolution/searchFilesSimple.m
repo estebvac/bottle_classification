@@ -16,18 +16,34 @@ number_of_files = size(list);
 labels = zeros(size(list));
 testBottles=zeros(288,119,3,number_of_files(1,1)*2);
 k = 1;
-CellSizeHOG = [16 8]; %[16 8];
+
+measures.liquidArea = zeros(1,  number_of_files(1,1));
+measures.brightAreaLabel = zeros(1,  number_of_files(1,1));
+measures.darkAreaLabel = zeros(1,  number_of_files(1,1));
+measures.labelStraightness  = zeros(1,  number_of_files(1,1));
+measures.capArea = zeros(1,  number_of_files(1,1));
+measures.deformedMaskRed = zeros(1,  number_of_files(1,1));
+measures.deformedMaskGray = zeros(1,  number_of_files(1,1));
+
 %% OPEN EACH FILE
 for i= 1: number_of_files(1,1)
     %% READING ALL THE IMAGES
     filename = [list(i).folder '\'   list(i).name];
     OriginalImage = imread(filename);
-    BottleImage = rgb2gray(OriginalImage);
     %% FIND THE BOTTLES
-    Result = processBottleImage(OriginalImage);
-    figure(1);imshow(OriginalImage);
-    bottleLabel = getLabel(Result);
-    title(bottleLabel);
-    pause(2);
+    [Result, bottleImage, locations, obtainedMeasures] = processBottleImage(OriginalImage);
+
+    measures.liquidArea(i) = obtainedMeasures.liquidArea;
+    measures.brightAreaLabel(i) = obtainedMeasures.brightAreaLabel;
+    measures.darkAreaLabel(i) = obtainedMeasures.darkAreaLabel;
+    measures.labelStraightness(i)  = obtainedMeasures.labelStraightness;
+    measures.capArea(i) = obtainedMeasures.capArea;
+    measures.deformedMaskRed(i) = obtainedMeasures.deformedMaskRed;
+    measures.deformedMaskGray(i) = obtainedMeasures.deformedMaskGray;
+
+    %figure(1);imshow(OriginalImage);
+    %bottleLabel = getLabel(Result);
+    %title(bottleLabel);
+    %pause(2);
 end
 
